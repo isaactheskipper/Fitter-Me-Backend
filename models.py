@@ -4,14 +4,32 @@ from flask_sqlalchemy import SQLAlchemy
 
 
 
+class UserDetail(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    first_name = db.Column(db.String(100), nullable=False)
+    last_name = db.Column(db.String(100), nullable=False)
+    birthdate = db.Column(db.Date, nullable=False)
+    current_weight = db.Column(db.Numeric(5,2), nullable=False)
+    target_weight = db.Column(db.Numeric(5,2), nullable=False)
+    height = db.Column(db.Numeric(5,2), nullable=False)
+    program_duration = db.Column(db.Integer, nullable=False)
+    role_id = db.Column(db.Integer, db.ForeignKey('role.id'), nullable=False)
+    achievement_id = db.Column(db.Integer, db.ForeignKey('achievement.id'), nullable=True)
+    gender_id = db.Column(db.Integer, db.ForeignKey('gender.id'), nullable=False)
+    created_when = db.Column(db.DateTime, server_default=db.func.current_timestamp())
+    user = db.relationship('User', back_populates='user_details')
+    role = db.relationship('Role', back_populates='users')
+    achievement = db.relationship('Achievement', back_populates='users')
+    gender = db.relationship('Gender', back_populates='users')
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
+    username = db.Column(db.String(100), unique=True, nullable=False)
+    email = db.Column(db.String(255), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
-
-    # def set_password(self, password):
-    #     self.password = bcrypt.generate_password_hash(password).decode('utf-8')
+    user_details = db.relationship('UserDetail', back_populates='user', uselist=False)
+    workouts_done = db.relationship('WorkoutDone', back_populates='user')
 
 class Role(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -34,24 +52,7 @@ class Gender(db.Model):
     name = db.Column(db.String(50), nullable=False)
     users = db.relationship('UserDetail', back_populates='gender')
 
-class UserDetail(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    first_name = db.Column(db.String(100), nullable=False)
-    last_name = db.Column(db.String(100), nullable=False)
-    birthdate = db.Column(db.Date, nullable=False)
-    current_weight = db.Column(db.Numeric(5,2), nullable=False)
-    target_weight = db.Column(db.Numeric(5,2), nullable=False)
-    height = db.Column(db.Numeric(5,2), nullable=False)
-    program_duration = db.Column(db.Integer, nullable=False)
-    role_id = db.Column(db.Integer, db.ForeignKey('role.id'), nullable=False)
-    achievement_id = db.Column(db.Integer, db.ForeignKey('achievement.id'), nullable=True)
-    gender_id = db.Column(db.Integer, db.ForeignKey('gender.id'), nullable=False)
-    created_when = db.Column(db.DateTime, server_default=db.func.current_timestamp())
-    user = db.relationship('User', back_populates='user_details')
-    role = db.relationship('Role', back_populates='users')
-    achievement = db.relationship('Achievement', back_populates='users')
-    gender = db.relationship('Gender', back_populates='users')
+
 
 class Workout(db.Model):
     id = db.Column(db.Integer, primary_key=True)
