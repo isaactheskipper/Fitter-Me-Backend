@@ -61,26 +61,33 @@ def delete_user(id):
 
 @routes_bp.route('/user-details', methods=['POST'])
 def add_user_details():
-    data = request.get_json()
-    if not User.query.get(data["user_id"]):
-        return jsonify({"error": "User not found"}), 404
+    try:
+        data = request.get_json()
+        print("Received data:", data)  # Debugging
 
-    new_details = UserDetail(
-        user_id=data["user_id"],
-        first_name=data["first_name"],
-        last_name=data["last_name"],
-        birthdate=data["birthdate"],
-        current_weight=data["current_weight"],
-        target_weight=data["target_weight"],
-        height=data["height"],
-        program_duration=data["program_duration"],
-        role_id=data["role_id"],
-        achievement_id=data.get("achievement_id"),
-        gender_id=data["gender_id"],
-    )
-    db.session.add(new_details)
-    db.session.commit()
-    return jsonify({"message": "User details added successfully"}), 201
+        if not User.query.get(data["user_id"]):
+            return jsonify({"error": "User not found"}), 404
+
+        new_details = UserDetail(
+            user_id=data["user_id"],
+            first_name=data["first_name"],
+            last_name=data["last_name"],
+            birthdate=data["birthdate"],
+            current_weight=data["current_weight"],
+            target_weight=data["target_weight"],
+            height=data["height"],
+            program_duration=data["program_duration"],
+            role_id=data["role_id"],
+            achievement_id=data.get("achievement_id"),  # Optional field
+            gender_id=data["gender_id"],
+        )
+        db.session.add(new_details)
+        db.session.commit()
+        return jsonify({"message": "User details added successfully"}), 201
+    except Exception as e:
+        print("Error adding user details:", str(e))  # Debugging
+        return jsonify({"error": "Internal server error"}), 500
+
 
 @routes_bp.route('/user-details', methods=['GET'])
 def get_all_user_details():
