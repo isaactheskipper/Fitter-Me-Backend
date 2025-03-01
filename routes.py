@@ -10,13 +10,23 @@ routes_bp = Blueprint('routes', __name__)
 @routes_bp.route('/users', methods=['POST'])
 def create_user():
     data = request.get_json()
-    hashed_password = generate_password_hash(data['password'], method='pbkdf2:sha256')
 
+    # Validate required fields
+    if not data.get('username') or not data.get('email') or not data.get('password'):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    # Check if email already exists
+    if User.query.filter_by(email=data['email']).first():
+        return jsonify({"error": "Email already in use"}), 409
+
+    # Hash password and create user
+    hashed_password = generate_password_hash(data['password'], method='pbkdf2:sha256')
     new_user = User(username=data['username'], email=data['email'], password=hashed_password)
+
     db.session.add(new_user)
     db.session.commit()
 
-    return jsonify({"message": "User created successfully", "id": new_user.id}), 201  # ✅ Return user ID
+    return jsonify({"message": "User created successfully", "id": new_user.id}), 201
 
 
 # Get all users
@@ -25,36 +35,39 @@ def get_users():
     users = User.query.all()
     return jsonify([{ "id": user.id, "username": user.username, "email": user.email } for user in users])
 
+
 # Get a single user by ID
 @routes_bp.route('/users/<int:id>', methods=['GET'])
 def get_user(id):
-    user = User.query.get(id)
-    if not user:
-        return jsonify({"error": "User not found"}), 404
+    user = User.query.get_or_404(id, description="User not found")
     return jsonify({ "id": user.id, "username": user.username, "email": user.email })
+
 
 # Update a user
 @routes_bp.route('/users/<int:id>', methods=['PUT'])
 def update_user(id):
-    user = User.query.get(id)
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-    
+    user = User.query.get_or_404(id, description="User not found")
+
     data = request.get_json()
-    user.username = data.get('username', user.username)
-    user.email = data.get('email', user.email)
+    if 'username' in data:
+        user.username = data['username']
+    if 'email' in data:
+        # Check if the new email is already taken by another user
+        if User.query.filter(User.email == data['email'], User.id != id).first():
+            return jsonify({"error": "Email already in use"}), 409
+        user.email = data['email']
     if 'password' in data:
         user.password = generate_password_hash(data['password'], method='pbkdf2:sha256')
+
     db.session.commit()
     return jsonify({"message": "User updated successfully"})
+
 
 # Delete a user
 @routes_bp.route('/users/<int:id>', methods=['DELETE'])
 def delete_user(id):
-    user = User.query.get(id)
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-    
+    user = User.query.get_or_404(id, description="User not found")
+
     db.session.delete(user)
     db.session.commit()
     return jsonify({"message": "User deleted successfully"})
@@ -111,6 +124,22 @@ def get_all_user_details():
             "gender_id": d.gender_id
         } for d in details
     ])
+
+@routes_bp.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+
+    # Validate input
+    if not data.get('email') or not data.get('password'):
+        return jsonify({"error": "Email and password required"}), 400
+
+    user = User.query.filter_by(email=data['email']).first()
+
+    if not user or not check_password_hash(user.password, data['password']):
+        return jsonify({"error": "Invalid email or password"}), 401
+
+    return jsonify({"message": "Login successful", "id": user.id}), 200
+
 
 
 ### ROLES ###
