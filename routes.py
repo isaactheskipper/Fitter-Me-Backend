@@ -63,34 +63,34 @@ def delete_user(id):
 def add_user_details():
     try:
         data = request.get_json()
-        print("Received data:", data)  # ✅ Print incoming request
+        print("📩 Received Data:", data)  # ✅ Debugging
 
         if not User.query.get(data["user_id"]):
-            print("User not found in database:", data["user_id"])  # ✅ Debugging
+            print("❌ User ID not found:", data["user_id"])  # ✅ Debugging
             return jsonify({"error": "User not found"}), 404
 
         new_details = UserDetail(
             user_id=data["user_id"],
             first_name=data["first_name"],
             last_name=data["last_name"],
-            birthdate=data["birthdate"],
+            birthdate=data["birthdate"],  # Check format
             current_weight=data["current_weight"],
             target_weight=data["target_weight"],
             height=data["height"],
             program_duration=data["program_duration"],
             role_id=data["role_id"],
-            achievement_id=data.get("achievement_id"),  # Optional field
+            achievement_id=data.get("achievement_id"),  # Optional
             gender_id=data["gender_id"],
         )
 
         db.session.add(new_details)
         db.session.commit()
+        print("✅ User details added successfully!")
         return jsonify({"message": "User details added successfully"}), 201
 
     except Exception as e:
-        print("❌ Error adding user details:", str(e))  # ✅ Print actual error
+        print("❌ Internal Server Error:", str(e))  # ✅ Debugging
         return jsonify({"error": "Internal server error"}), 500
-
 
 
 @routes_bp.route('/user-details', methods=['GET'])
