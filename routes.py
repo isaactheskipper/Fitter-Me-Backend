@@ -11,10 +11,13 @@ routes_bp = Blueprint('routes', __name__)
 def create_user():
     data = request.get_json()
     hashed_password = generate_password_hash(data['password'], method='pbkdf2:sha256')
+
     new_user = User(username=data['username'], email=data['email'], password=hashed_password)
     db.session.add(new_user)
     db.session.commit()
-    return jsonify({"message": "User created successfully"}), 201
+
+    return jsonify({"message": "User created successfully", "id": new_user.id}), 201  # ✅ Return user ID
+
 
 # Get all users
 @routes_bp.route('/users', methods=['GET'])
