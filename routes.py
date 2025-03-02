@@ -125,6 +125,28 @@ def get_all_user_details():
         } for d in details
     ])
 
+@routes_bp.route('/user-details/<int:user_id>', methods=['GET'])
+def get_user_details(user_id):
+    user_detail = UserDetail.query.filter_by(user_id=user_id).first()
+    
+    if not user_detail:
+        return jsonify({"error": "User not found"}), 404
+
+    return jsonify({
+        "user_id": user_detail.user_id,
+        "first_name": user_detail.first_name,
+        "last_name": user_detail.last_name,
+        "birthdate": str(user_detail.birthdate),
+        "current_weight": float(user_detail.current_weight),
+        "target_weight": float(user_detail.target_weight),
+        "height": float(user_detail.height),
+        "program_duration": user_detail.program_duration,
+        "role_id": user_detail.role_id,
+        "achievement_id": user_detail.achievement_id,
+        "gender_id": user_detail.gender_id
+    })
+
+
 @routes_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
