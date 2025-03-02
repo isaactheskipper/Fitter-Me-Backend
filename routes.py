@@ -125,8 +125,8 @@ def get_all_user_details():
         } for d in details
     ])
 
-@routes_bp.route('/user-details/<int:user_id>', methods=['GET'])
-def get_user_details(user_id):
+@routes_bp.route('/user-details/<int:user_id>', methods=['GET', 'PUT'])
+def user_details(user_id):
     user_detail = UserDetail.query.filter_by(user_id=user_id).first()
     
     if not user_detail:
@@ -134,6 +134,27 @@ def get_user_details(user_id):
         print(response.get_data(as_text=True))  # Log response data
         return response, 404
 
+    if request.method == 'PUT':
+        try:
+            data = request.get_json()
+            
+            user_detail.first_name = data.get("first_name", user_detail.first_name)
+            user_detail.last_name = data.get("last_name", user_detail.last_name)
+            user_detail.birthdate = data.get("birthdate", user_detail.birthdate)
+            user_detail.current_weight = float(data.get("current_weight", user_detail.current_weight))
+            user_detail.target_weight = float(data.get("target_weight", user_detail.target_weight))
+            user_detail.height = float(data.get("height", user_detail.height))
+            user_detail.program_duration = int(data.get("program_duration", user_detail.program_duration))
+            user_detail.gender_id = data.get("gender_id", user_detail.gender_id)
+
+            db.session.commit()
+            return jsonify({"message": "Profile updated successfully"}), 200
+        
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": str(e)}), 500
+
+    # Handle GET request
     response = jsonify({
         "user_id": user_detail.user_id,
         "first_name": user_detail.first_name,
