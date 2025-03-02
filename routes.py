@@ -130,9 +130,11 @@ def get_user_details(user_id):
     user_detail = UserDetail.query.filter_by(user_id=user_id).first()
     
     if not user_detail:
-        return jsonify({"error": "User not found"}), 404
+        response = jsonify({"error": "User not found"})
+        print(response.get_data(as_text=True))  # Log response data
+        return response, 404
 
-    return jsonify({
+    response = jsonify({
         "user_id": user_detail.user_id,
         "first_name": user_detail.first_name,
         "last_name": user_detail.last_name,
@@ -145,6 +147,10 @@ def get_user_details(user_id):
         "achievement_id": user_detail.achievement_id,
         "gender_id": user_detail.gender_id
     })
+
+    print(response.get_data(as_text=True))  # Log successful response data
+    return response
+
 
 
 @routes_bp.route('/login', methods=['POST'])
