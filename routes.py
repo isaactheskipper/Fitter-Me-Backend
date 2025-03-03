@@ -76,10 +76,10 @@ def delete_user(id):
 def add_user_details():
     try:
         data = request.get_json()
-        print("📩 Received Data:", data)  # ✅ Debugging
+        print(" Received Data:", data)  
 
         if not User.query.get(data["user_id"]):
-            print("❌ User ID not found:", data["user_id"])  # ✅ Debugging
+            print(" User ID not found:", data["user_id"])  
             return jsonify({"error": "User not found"}), 404
 
         new_details = UserDetail(
@@ -102,10 +102,10 @@ def add_user_details():
         return jsonify({"message": "User details added successfully"}), 201
 
     except Exception as e:
-        print("❌ Internal Server Error:", str(e))  # ✅ Debugging
+        print("Internal Server Error:", str(e))  
         return jsonify({"error": "Internal server error"}), 500
 
-
+# Create a new user-details
 @routes_bp.route('/user-details', methods=['GET'])
 def get_all_user_details():
     details = UserDetail.query.all()
@@ -169,11 +169,11 @@ def user_details(user_id):
         "gender_id": user_detail.gender_id
     })
 
-    print(response.get_data(as_text=True))  # Log successful response data
+    print(response.get_data(as_text=True))  
     return response
 
 
-
+#  user Login
 @routes_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -190,7 +190,7 @@ def login():
     return jsonify({
         "message": "Login successful",
         "id": user.id,
-        "username": user.username  # ✅ Now sending username
+        "username": user.username  
     }), 200
 
 
@@ -309,5 +309,3 @@ def get_workouts_done():
         } for wd in workouts_done
     ])
 
-# if __name__ == '__main__':
-#     app.run(debug=True)
