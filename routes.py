@@ -286,35 +286,37 @@ def get_workouts():
 
 @routes_bp.route('/workouts-done', methods=['POST', 'PUT'])
 def handle_workout_done():
-    data = request.get_json()
+    try:
+        data = request.get_json()
+        
+        if request.method == 'POST':
+            new_workout_done = WorkoutDone(
+                user_id=data["user_id"],
+                workout_id=data["workout_id"],
+                video_path=data.get("video_path"),
+                workout_date=data["workout_date"]
+            )
+            db.session.add(new_workout_done)
+            db.session.commit()
+            return jsonify({"message": "Workout done added successfully", "workout_done_id": new_workout_done.id}), 201
 
-    if request.method == 'POST':
-        # Create a new workout record
-        new_workout_done = WorkoutDone(
-            user_id=data["user_id"],
-            workout_id=data["workout_id"],
-            video_path=data.get("video_path"),
-            workout_date=data["workout_date"]
-        )
-        db.session.add(new_workout_done)
-        db.session.commit()
-        return jsonify({"message": "Workout done added successfully", "workout_done_id": new_workout_done.id}), 201
+        elif request.method == 'PUT':
+            workout_done_id = data.get("workout_done_id")
+            if not workout_done_id:
+                return jsonify({"error": "workout_done_id is required"}), 400
 
-    elif request.method == 'PUT':
-        # Update an existing workout record's video_path
-        workout_done_id = data.get("workout_done_id")
-        if not workout_done_id:
-            return jsonify({"error": "workout_done_id is required"}), 400
+            workout_done = WorkoutDone.query.get(workout_done_id)
+            if not workout_done:
+                return jsonify({"error": "Workout record not found"}), 404
 
-        workout_done = WorkoutDone.query.get(workout_done_id)
-        if not workout_done:
-            return jsonify({"error": "Workout record not found"}), 404
+            workout_done.video_path = data.get("video_path", workout_done.video_path)
+            db.session.commit()
+            
+            return jsonify({"message": "Workout video updated successfully", "workout_done_id": workout_done.id, "video_path": workout_done.video_path}), 200
 
-        # Update the video_path field
-        workout_done.video_path = data.get("video_path", workout_done.video_path)
-        db.session.commit()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500  # 🔥 Always return JSON in case of errors
 
-        return jsonify({"message": "Workout video updated successfully", "workout_done_id": workout_done.id, "video_path": workout_done.video_path}), 200
 
 
 @routes_bp.route('/workouts-done', methods=['GET'])
