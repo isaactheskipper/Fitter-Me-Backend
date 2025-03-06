@@ -2,7 +2,9 @@ from flask import Flask, request, jsonify, Blueprint
 from werkzeug.security import generate_password_hash, check_password_hash
 from config import db
 from models import User, UserDetail, Role, Level, Achievement, Gender, Workout, WorkoutDone
+from datetime import datetime
 
+routes_bp = Blueprint('routes', __name__)
 
 routes_bp = Blueprint('routes', __name__)
 
@@ -284,21 +286,32 @@ def get_workouts():
 
 ### WORKOUTS DONE ###
 
+
+
 @routes_bp.route('/workouts-done', methods=['POST', 'PUT'])
 def handle_workout_done():
     try:
         data = request.get_json()
 
+        if not data:
+            return jsonify({"error": "Invalid JSON payload"}), 400
+
         if request.method == 'POST':
             # Ensure all required fields are present
-            if not all(k in data for k in ["user_id", "workout_id", "workout_date"]):
+            required_fields = ["user_id", "workout_id", "workout_date"]
+            if not all(field in data for field in required_fields):
                 return jsonify({"error": "Missing required fields"}), 400
+
+            try:
+                workout_date = datetime.strptime(data["workout_date"], "%Y-%m-%d").date()
+            except ValueError:
+                return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
 
             new_workout_done = WorkoutDone(
                 user_id=data["user_id"],
                 workout_id=data["workout_id"],
                 video_path=data.get("video_path"),  # Optional
-                workout_date=datetime.strptime(data["workout_date"], "%Y-%m-%d").date()
+                workout_date=workout_date
             )
 
             db.session.add(new_workout_done)
@@ -318,8 +331,10 @@ def handle_workout_done():
             if not workout_done:
                 return jsonify({"error": "Workout record not found"}), 404
 
-            # Update the video path
-            workout_done.video_path = data.get("video_path", workout_done.video_path)
+            # Update the video path if provided
+            if "video_path" in data:
+                workout_done.video_path = data["video_path"]
+
             db.session.commit()
 
             return jsonify({
@@ -329,7 +344,7 @@ def handle_workout_done():
             }), 200
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500  # Return JSON for all errors
+        return jsonify({"error": str(e)}), 500
 
 
 
