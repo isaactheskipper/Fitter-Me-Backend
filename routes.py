@@ -288,17 +288,26 @@ def get_workouts():
 def handle_workout_done():
     try:
         data = request.get_json()
-        
+
         if request.method == 'POST':
+            # Ensure all required fields are present
+            if not all(k in data for k in ["user_id", "workout_id", "workout_date"]):
+                return jsonify({"error": "Missing required fields"}), 400
+
             new_workout_done = WorkoutDone(
                 user_id=data["user_id"],
                 workout_id=data["workout_id"],
-                video_path=data.get("video_path"),
-                workout_date=data["workout_date"]
+                video_path=data.get("video_path"),  # Optional
+                workout_date=datetime.strptime(data["workout_date"], "%Y-%m-%d").date()
             )
+
             db.session.add(new_workout_done)
             db.session.commit()
-            return jsonify({"message": "Workout done added successfully", "workout_done_id": new_workout_done.id}), 201
+
+            return jsonify({
+                "message": "Workout done added successfully",
+                "workout_done_id": new_workout_done.id
+            }), 201
 
         elif request.method == 'PUT':
             workout_done_id = data.get("workout_done_id")
@@ -309,13 +318,18 @@ def handle_workout_done():
             if not workout_done:
                 return jsonify({"error": "Workout record not found"}), 404
 
+            # Update the video path
             workout_done.video_path = data.get("video_path", workout_done.video_path)
             db.session.commit()
-            
-            return jsonify({"message": "Workout video updated successfully", "workout_done_id": workout_done.id, "video_path": workout_done.video_path}), 200
+
+            return jsonify({
+                "message": "Workout video updated successfully",
+                "workout_done_id": workout_done.id,
+                "video_path": workout_done.video_path
+            }), 200
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500  # 🔥 Always return JSON in case of errors
+        return jsonify({"error": str(e)}), 500  # Return JSON for all errors
 
 
 
